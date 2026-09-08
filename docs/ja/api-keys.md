@@ -117,13 +117,13 @@ Claude（デフォルトでは Sonnet 4.6）で AI 買い推奨を提供しま�
 ## Mistral — オプション
 {: .text-yellow-200}
 
-Mistral Large（デフォルトでは `mistral-large-latest`）で AI 買い推奨を提供します。
+AI 買い推奨を提供します。コードのデフォルトは `mistral-large-latest` ですが、**無料枠では実行できません** — `MISTRAL_MODEL` を設定してください（下記参照）。
 
 1. [console.mistral.ai](https://console.mistral.ai) にアクセスしてサインアップ
 2. **API Keys** → **Create new key** に移動し、キーをコピー
 3. GitHub Secret として追加 — 名前：`MISTRAL_API_KEY`、値：先ほどコピーしたキー
 
-**無料枠：** Experiment ティアは恒久的に無料で、月あたり約 10 億トークン。Richfolio のワークロードは月あたり約 700 万トークンです。クレジット制ではなくレート制限型なので、上限に当たった場合の症状は課金エラーではなく 429 であり、これは自動的にリトライされます。より余裕を持たせて実行を速くしたい場合は `MISTRAL_MODEL=mistral-medium-latest` を設定してください（品質はわずかに下がります）。
+**無料枠 — `MISTRAL_MODEL` の設定が必須：** 無料枠で使えるのは `ministral-*` ファミリーだけです。コードのデフォルトである `mistral-large-latest` は `403 tier_not_allowed` を返し、`mistral-small/medium-*` と `magistral-*` はいずれも `x-ratelimit-limit-req-minute: 0` — リトライで通過できるスロットリングではなく、割り当てそのものがゼロです。未設定のままだと Mistral は何も寄与せず、実行ログに `Provider Mistral failed` と出て他プロバイダに静かに縮退します。`MISTRAL_MODEL=ministral-14b-latest`（30 req/分、256k コンテキスト、無料枠で最大）を設定してください。余裕を優先するなら `ministral-8b-latest`（188/分）や `ministral-3b-latest`（750/分）もあります。キーが実際に何を許可されているかは `curl -s -H "Authorization: Bearer $MISTRAL_API_KEY" https://api.mistral.ai/v1/models` で確認できますが、モデル一覧に載っていても割り当てが 0/分のことがあるため、必ず limit ヘッダーを見てください。
 
 Mistral が 2 つ目のプロバイダとして適しているのは、Gemini とは系統の異なる独立したモデルだからです。2 つ目のモデルは、その不一致がモデルの弱さではなくデータを反映している場合にのみ情報を追加します。
 
@@ -153,7 +153,7 @@ Mistral が 2 つ目のプロバイダとして適しているのは、Gemini �
 | `AI_DETAILED_PROVIDER` | `gemini` | 詳細分析を Gemini に強制（GEMINI_API_KEY の設定が必要） |
 | `AI_DETAILED_PROVIDER` | `claude` | 詳細分析を Claude に強制（`CLAUDE_CODE_OAUTH_TOKEN` または `ANTHROPIC_API_KEY` の設定が必要） |
 | `AI_DETAILED_PROVIDER` | `mistral` | 詳細分析を Mistral に強制（MISTRAL_API_KEY の設定が必要） |
-| `MISTRAL_MODEL` | `mistral-medium-latest` | より安価で高速な Mistral モデル（デフォルト：`mistral-large-latest`） |
+| `MISTRAL_MODEL` | `ministral-14b-latest` | **無料枠では必須** — デフォルトの `mistral-large-latest` は有料枠専用 |
 | `CLAUDE_MODEL` | 例：`claude-haiku-4-5-20251001` | Claude モデルを上書き（デフォルト：`claude-sonnet-4-6`） |
 
 キーが設定されていないプロバイダ（または不明な名前）を `AI_DETAILED_PROVIDER` に指定した場合は、ログに記録された上で無視され、レジストリ順にフォールバックします。API キーのないプロバイダを固定すると、すべてのティッカーで失敗してしまうためです。
@@ -222,5 +222,5 @@ Richfolio は汎用的な買いシグナルを X、Facebook、Threads、LinkedIn
 | `LINKEDIN_ACCESS_TOKEN` / `LINKEDIN_ORG_URN` | いいえ | LinkedIn ページ投稿 |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET` | いいえ | X/Twitter 投稿 |
 | `CLAUDE_MODEL` | いいえ | Claude モデルを上書き（デフォルト：`claude-sonnet-4-6`） |
-| `MISTRAL_MODEL` | いいえ | Mistral モデルを上書き（デフォルト：`mistral-large-latest`） |
+| `MISTRAL_MODEL` | いいえ | Mistral モデルを上書き（デフォルト：`mistral-large-latest`。**無料枠は `ministral-14b-latest` が必須**） |
 | `AI_DETAILED_PROVIDER` | いいえ | STRONG BUY 分析ページに `gemini`、`claude`、`mistral` のいずれかを強制 |

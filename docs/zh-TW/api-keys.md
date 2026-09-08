@@ -117,13 +117,13 @@ Google 的定價頁面聲明 Gemini 2.5 Pro 對輸入與輸出 token 都是["免
 ## Mistral — 選用
 {: .text-yellow-200}
 
-以 Mistral Large(預設 `mistral-large-latest`)產生 AI 買進建議。
+產生 AI 買進建議。程式碼預設值是 `mistral-large-latest`,但**免費層無法執行它** — 請設定 `MISTRAL_MODEL`(見下文)。
 
 1. 前往 [console.mistral.ai](https://console.mistral.ai) 並註冊
 2. 進入 **API Keys** → **Create new key**,複製金鑰
 3. 加入為 GitHub Secret — 名稱:`MISTRAL_API_KEY`,值:剛複製的金鑰
 
-**免費層:** Experiment 層永久免費 — 每月約 10 億 tokens,而 Richfolio 的工作量約為每月 700 萬。它採速率限制而非額度制,因此推到上限時出現的是 429(而非計費失敗),這類錯誤會自動重試。若想要更多餘裕、執行更快,可設定 `MISTRAL_MODEL=mistral-medium-latest`(品質略降)。
+**免費層 — 必須設定 `MISTRAL_MODEL`:** 免費層只提供 `ministral-*` 系列。程式碼預設的 `mistral-large-latest` 會回傳 `403 tier_not_allowed`,而所有 `mistral-small/medium-*` 與 `magistral-*` 模型的 `x-ratelimit-limit-req-minute` 都是 `0` — 這是完全沒有配額,而非重試就能通過的限流。若未設定,Mistral 將毫無貢獻:執行記錄只會出現 `Provider Mistral failed`,然後靜默降級到其他供應商。請設定 `MISTRAL_MODEL=ministral-14b-latest`(30 次/分鐘,256k 脈絡,免費層可用的最大模型);`ministral-8b-latest`(188/分鐘)與 `ministral-3b-latest`(750/分鐘)則以品質換取餘裕。可用 `curl -s -H "Authorization: Bearer $MISTRAL_API_KEY" https://api.mistral.ai/v1/models` 查看某把金鑰實際獲准的模型 — 但要看 limit 標頭,因為模型可能列出來卻仍是 0/分鐘的配額。
 
 Mistral 適合作為第二家服務商,正是因為它與 Gemini 屬於彼此獨立的模型脈絡:第二個模型唯有在其分歧反映的是資料、而非模型本身較弱時,才真正提供新資訊。
 
@@ -153,7 +153,7 @@ Mistral 適合作為第二家服務商,正是因為它與 Gemini 屬於彼此獨
 | `AI_DETAILED_PROVIDER` | `gemini` | 強制使用 Gemini 產生詳細分析(必須已設定 GEMINI_API_KEY) |
 | `AI_DETAILED_PROVIDER` | `claude` | 強制使用 Claude 產生詳細分析(必須已設定 `CLAUDE_CODE_OAUTH_TOKEN` 或 `ANTHROPIC_API_KEY`) |
 | `AI_DETAILED_PROVIDER` | `mistral` | 強制使用 Mistral 產生詳細分析(必須已設定 MISTRAL_API_KEY) |
-| `MISTRAL_MODEL` | `mistral-medium-latest` | 更便宜、更快的 Mistral 模型(預設:`mistral-large-latest`) |
+| `MISTRAL_MODEL` | `ministral-14b-latest` | **免費層必須設定** — 預設的 `mistral-large-latest` 僅限付費層 |
 | `CLAUDE_MODEL` | 例如 `claude-haiku-4-5-20251001` | 覆寫 Claude 模型(預設:`claude-sonnet-4-6`) |
 
 若 `AI_DETAILED_PROVIDER` 指定了尚未設定金鑰的服務商(或未知名稱),該設定會被記錄並忽略,回退為註冊順序 — 否則釘選一家沒有 API key 的服務商會導致每個標的都失敗。
@@ -222,5 +222,5 @@ Richfolio 可將通用的買進訊號發布到 X、Facebook、Threads 與 Linked
 | `LINKEDIN_ACCESS_TOKEN` / `LINKEDIN_ORG_URN` | 否 | LinkedIn 頁面發文 |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET` | 否 | X/Twitter 發文 |
 | `CLAUDE_MODEL` | 否 | 覆寫 Claude 模型(預設:`claude-sonnet-4-6`) |
-| `MISTRAL_MODEL` | 否 | 覆寫 Mistral 模型(預設:`mistral-large-latest`) |
+| `MISTRAL_MODEL` | 否 | 覆寫 Mistral 模型(預設:`mistral-large-latest`;**免費層必須設為 `ministral-14b-latest`**) |
 | `AI_DETAILED_PROVIDER` | 否 | 強制使用 `gemini`、`claude` 或 `mistral` 產生 STRONG BUY 詳細分析頁 |

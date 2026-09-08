@@ -130,13 +130,13 @@ recomendaciones basadas en brechas en su lugar.
 ## Mistral — Opcional
 {: .text-yellow-200}
 
-Genera las recomendaciones de compra con IA usando Mistral Large (`mistral-large-latest` por defecto).
+Genera las recomendaciones de compra con IA. El valor por defecto en el código es `mistral-large-latest`, pero **el plan gratuito no puede ejecutarlo** — configura `MISTRAL_MODEL` (ver abajo).
 
 1. Ve a [console.mistral.ai](https://console.mistral.ai) y regístrate
 2. Navega a **API Keys** → **Create new key** y copia la clave
 3. Agrégala como GitHub Secret — nombre: `MISTRAL_API_KEY`, valor: la clave que acabas de copiar
 
-**Plan gratuito:** el nivel Experiment es gratuito y permanente — alrededor de 1.000 millones de tokens al mes, frente a los ~7 millones que consume Richfolio. Está limitado por tasa de peticiones, no por créditos, así que si lo fuerzas verás errores 429 (no fallos de facturación) y esos se reintentan automáticamente. Configura `MISTRAL_MODEL=mistral-medium-latest` para tener más margen y corridas más rápidas a cambio de algo de calidad.
+**Plan gratuito — es obligatorio configurar `MISTRAL_MODEL`:** el plan gratuito solo concede la familia `ministral-*`. El valor por defecto del código, `mistral-large-latest`, devuelve `403 tier_not_allowed`, y todos los modelos `mistral-small/medium-*` y `magistral-*` informan `x-ratelimit-limit-req-minute: 0` — es ausencia total de cuota, no una limitación que puedas superar reintentando. Si lo dejas sin configurar, Mistral no aporta nada: la ejecución registra `Provider Mistral failed` y degrada en silencio al resto de proveedores. Configura `MISTRAL_MODEL=ministral-14b-latest` (30 req/min, contexto de 256k, el mayor que permite el plan gratuito); `ministral-8b-latest` (188/min) y `ministral-3b-latest` (750/min) cambian calidad por margen. Comprueba qué permite realmente una clave con `curl -s -H "Authorization: Bearer $MISTRAL_API_KEY" https://api.mistral.ai/v1/models`, y fíjate en la cabecera de límite: un modelo puede aparecer en la lista y aun así tener una cuota de 0/min.
 
 Mistral funciona bien como segundo proveedor precisamente porque es un linaje de modelos independiente de Gemini: un segundo modelo solo aporta información cuando su desacuerdo refleja los datos y no la debilidad del modelo.
 
@@ -166,7 +166,7 @@ Cuando hay varios proveedores activos, la página de análisis por STRONG BUY (e
 | `AI_DETAILED_PROVIDER` | `gemini` | Forzar Gemini para análisis detallado (debe tener GEMINI_API_KEY configurada) |
 | `AI_DETAILED_PROVIDER` | `claude` | Forzar Claude para análisis detallado (debe tener `CLAUDE_CODE_OAUTH_TOKEN` o `ANTHROPIC_API_KEY` configurada) |
 | `AI_DETAILED_PROVIDER` | `mistral` | Forzar Mistral para análisis detallado (debe tener MISTRAL_API_KEY configurada) |
-| `MISTRAL_MODEL` | `mistral-medium-latest` | Modelo de Mistral más barato/rápido (por defecto: `mistral-large-latest`) |
+| `MISTRAL_MODEL` | `ministral-14b-latest` | **Obligatorio en el plan gratuito** — el valor por defecto `mistral-large-latest` es solo de pago |
 | `CLAUDE_MODEL` | p. ej. `claude-haiku-4-5-20251001` | Sobrescribir el modelo de Claude (por defecto: `claude-sonnet-4-6`) |
 
 Un `AI_DETAILED_PROVIDER` que nombre un proveedor sin clave configurada (o un nombre desconocido) se registra en el log y se ignora, volviendo al orden de registro — fijar un proveedor sin API key haría fallar todos los tickers.
@@ -235,5 +235,5 @@ Richfolio puede publicar señales de compra genéricas en cuentas públicas de X
 | `LINKEDIN_ACCESS_TOKEN` / `LINKEDIN_ORG_URN` | No | Publicación en Página de LinkedIn |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET` | No | Publicación en X/Twitter |
 | `CLAUDE_MODEL` | No | Sobrescribir el modelo de Claude (por defecto: `claude-sonnet-4-6`) |
-| `MISTRAL_MODEL` | No | Sobrescribir el modelo de Mistral (por defecto: `mistral-large-latest`) |
+| `MISTRAL_MODEL` | No | Sobrescribir el modelo de Mistral (por defecto: `mistral-large-latest`; **en el plan gratuito hay que usar `ministral-14b-latest`**) |
 | `AI_DETAILED_PROVIDER` | No | Forzar `gemini`, `claude` o `mistral` para la página de análisis de STRONG BUY |

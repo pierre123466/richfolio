@@ -117,13 +117,13 @@ Google 的定价页面声明 Gemini 2.5 Pro 对输入和输出 token 都是["免
 ## Mistral — 可选
 {: .text-yellow-200}
 
-使用 Mistral Large(默认 `mistral-large-latest`)生成 AI 买入建议。
+生成 AI 买入建议。代码默认值是 `mistral-large-latest`,但**免费层无法运行它** — 请设置 `MISTRAL_MODEL`(见下文)。
 
 1. 访问 [console.mistral.ai](https://console.mistral.ai) 并注册
 2. 进入 **API Keys** → **Create new key**,复制密钥
 3. 添加为 GitHub Secret — 名称:`MISTRAL_API_KEY`,值:刚才复制的密钥
 
-**免费额度:** Experiment 层长期免费 — 每月约 10 亿 tokens,而 Richfolio 的工作量约为每月 700 万。它按速率限制而非信用额度计费,所以触到上限时看到的是 429(而不是计费失败),这类错误会自动重试。想要更多余量、运行更快,可设置 `MISTRAL_MODEL=mistral-medium-latest`(质量略有下降)。
+**免费额度 — 必须设置 `MISTRAL_MODEL`:** 免费层只提供 `ministral-*` 系列。代码默认的 `mistral-large-latest` 返回 `403 tier_not_allowed`,而所有 `mistral-small/medium-*` 和 `magistral-*` 模型的 `x-ratelimit-limit-req-minute` 都是 `0` — 这是完全没有配额,而不是重试就能通过的限流。若不设置,Mistral 将毫无贡献:运行日志只会出现 `Provider Mistral failed`,然后静默降级到其他提供方。请设置 `MISTRAL_MODEL=ministral-14b-latest`(30 次/分钟,256k 上下文,免费层可用的最大模型);`ministral-8b-latest`(188/分钟)和 `ministral-3b-latest`(750/分钟)则以质量换取余量。可用 `curl -s -H "Authorization: Bearer $MISTRAL_API_KEY" https://api.mistral.ai/v1/models` 查看某个 key 实际允许的模型 — 但要看 limit 响应头,因为模型可能列出来却仍是 0/分钟的配额。
 
 Mistral 适合作为第二家服务商,正是因为它与 Gemini 属于彼此独立的模型谱系:第二个模型只有当它的分歧反映的是数据而不是自身能力较弱时,才真正带来新信息。
 
@@ -153,7 +153,7 @@ Mistral 适合作为第二家服务商,正是因为它与 Gemini 属于彼此独
 | `AI_DETAILED_PROVIDER` | `gemini` | 强制使用 Gemini 生成详细分析(必须已设置 GEMINI_API_KEY) |
 | `AI_DETAILED_PROVIDER` | `claude` | 强制使用 Claude 生成详细分析(必须已设置 `CLAUDE_CODE_OAUTH_TOKEN` 或 `ANTHROPIC_API_KEY`) |
 | `AI_DETAILED_PROVIDER` | `mistral` | 强制使用 Mistral 生成详细分析(必须已设置 MISTRAL_API_KEY) |
-| `MISTRAL_MODEL` | `mistral-medium-latest` | 更便宜、更快的 Mistral 模型(默认:`mistral-large-latest`) |
+| `MISTRAL_MODEL` | `ministral-14b-latest` | **免费层必须设置** — 默认的 `mistral-large-latest` 仅限付费层 |
 | `CLAUDE_MODEL` | 例如 `claude-haiku-4-5-20251001` | 覆盖 Claude 模型(默认:`claude-sonnet-4-6`) |
 
 如果 `AI_DETAILED_PROVIDER` 指定了一家没有设置密钥的服务商(或一个未知名称),该设置会被记录日志并忽略,回退到注册顺序 — 否则固定到一家没有 API key 的服务商会导致每个标的都失败。
@@ -222,5 +222,5 @@ Richfolio 可以把通用的买入信号发布到 X、Facebook、Threads 和 Lin
 | `LINKEDIN_ACCESS_TOKEN` / `LINKEDIN_ORG_URN` | 否 | LinkedIn 主页发布 |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET` | 否 | X/Twitter 发布 |
 | `CLAUDE_MODEL` | 否 | 覆盖 Claude 模型(默认:`claude-sonnet-4-6`) |
-| `MISTRAL_MODEL` | 否 | 覆盖 Mistral 模型(默认:`mistral-large-latest`) |
+| `MISTRAL_MODEL` | 否 | 覆盖 Mistral 模型(默认:`mistral-large-latest`;**免费层必须设为 `ministral-14b-latest`**) |
 | `AI_DETAILED_PROVIDER` | 否 | 强制使用 `gemini`、`claude` 或 `mistral` 生成 STRONG BUY 详细分析页 |

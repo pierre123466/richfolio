@@ -126,13 +126,13 @@ gap-based recommendations instead.
 ## Mistral — Optional
 {: .text-yellow-200}
 
-Powers the AI buy recommendations with Mistral Large (`mistral-large-latest` by default).
+Powers the AI buy recommendations. The code default is `mistral-large-latest`, but **the free tier cannot run it** — set `MISTRAL_MODEL` (see below).
 
 1. Go to [console.mistral.ai](https://console.mistral.ai) and sign up
 2. Navigate to **API Keys** → **Create new key**, copy the key
 3. Add as a GitHub Secret — name: `MISTRAL_API_KEY`, value: the key you just copied
 
-**Free tier:** the Experiment tier is free and permanent — roughly 1B tokens/month, against Richfolio's ~7M. It is rate-limited rather than credit-limited, so 429s (not billing failures) are what you hit if you push it; those are retried automatically. Set `MISTRAL_MODEL=mistral-medium-latest` for more headroom and faster runs at slightly lower quality.
+**Free tier — you must set `MISTRAL_MODEL`:** the free tier grants only the `ministral-*` family. `mistral-large-latest` (the code default) returns `403 tier_not_allowed`, and every `mistral-small/medium-*` and `magistral-*` model reports `x-ratelimit-limit-req-minute: 0` — no allowance at all, not a throttle you can retry past. Leave it unset on a free key and Mistral contributes nothing: the run logs `Provider Mistral failed` and quietly degrades to the other providers. Set `MISTRAL_MODEL=ministral-14b-latest` (30 req/min, 256k context, the largest the free tier allows); `ministral-8b-latest` (188/min) and `ministral-3b-latest` (750/min) trade quality for headroom. Check what a key actually allows with `curl -s -H "Authorization: Bearer $MISTRAL_API_KEY" https://api.mistral.ai/v1/models` — and read the limit header, since a model can be listed yet have a 0/min allowance.
 
 Mistral is a good second provider precisely because it is an independent model lineage from Gemini — a second model only adds information when its disagreement reflects the data rather than the model being weaker.
 
@@ -162,7 +162,7 @@ When several providers are active, the per-STRONG-BUY analysis page (the "More D
 | `AI_DETAILED_PROVIDER` | `gemini` | Force Gemini for detailed analysis (must have GEMINI_API_KEY set) |
 | `AI_DETAILED_PROVIDER` | `claude` | Force Claude for detailed analysis (must have `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` set) |
 | `AI_DETAILED_PROVIDER` | `mistral` | Force Mistral for detailed analysis (must have MISTRAL_API_KEY set) |
-| `MISTRAL_MODEL` | `mistral-medium-latest` | Cheaper/faster Mistral model (default: `mistral-large-latest`) |
+| `MISTRAL_MODEL` | `ministral-14b-latest` | **Required on the free tier** — the default `mistral-large-latest` is paid-tier only |
 | `CLAUDE_MODEL` | e.g. `claude-haiku-4-5-20251001` | Override Claude model (default: `claude-sonnet-4-6`) |
 
 An `AI_DETAILED_PROVIDER` naming a provider whose key is not set (or an unknown name) is logged and ignored, falling back to registry order — pinning a provider with no API key would otherwise fail every ticker.
@@ -231,5 +231,5 @@ Richfolio can publish generic buy signals to public accounts on X, Facebook, Thr
 | `LINKEDIN_ACCESS_TOKEN` / `LINKEDIN_ORG_URN` | No | LinkedIn Page posting |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET` | No | X/Twitter posting |
 | `CLAUDE_MODEL` | No | Override Claude model (default: `claude-sonnet-4-6`) |
-| `MISTRAL_MODEL` | No | Override Mistral model (default: `mistral-large-latest`) |
+| `MISTRAL_MODEL` | No | Override Mistral model (default: `mistral-large-latest`; **free tier must set `ministral-14b-latest`**) |
 | `AI_DETAILED_PROVIDER` | No | Force `gemini`, `claude` or `mistral` for the STRONG BUY analysis page |

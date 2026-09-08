@@ -117,13 +117,13 @@ Claude (기본값 Sonnet 4.6)로 AI 매수 추천을 구동합니다. 인증 방
 ## Mistral — 선택 사항
 {: .text-yellow-200}
 
-Mistral Large (기본값 `mistral-large-latest`)로 AI 매수 추천을 생성합니다.
+AI 매수 추천을 생성합니다. 코드 기본값은 `mistral-large-latest`이지만 **무료 플랜에서는 실행할 수 없습니다** — `MISTRAL_MODEL`을 설정하세요(아래 참조).
 
 1. [console.mistral.ai](https://console.mistral.ai)에 접속해 가입
 2. **API Keys** → **Create new key**로 이동해 키 복사
 3. GitHub Secret으로 추가 — 이름: `MISTRAL_API_KEY`, 값: 방금 복사한 키
 
-**무료 플랜:** Experiment 계층은 영구 무료이며 월 약 10억 토큰을 제공합니다. Richfolio의 워크로드는 월 약 700만 토큰입니다. 크레딧 방식이 아니라 요청 한도 방식이므로, 한도에 부딪히면 과금 오류가 아니라 429가 발생하며 이는 자동으로 재시도됩니다. 여유를 더 확보하고 실행을 빠르게 하려면 `MISTRAL_MODEL=mistral-medium-latest`를 설정하세요 (품질은 약간 낮아집니다).
+**무료 플랜 — `MISTRAL_MODEL` 설정 필수:** 무료 플랜은 `ministral-*` 계열만 제공합니다. 코드 기본값인 `mistral-large-latest`는 `403 tier_not_allowed`를 반환하고, `mistral-small/medium-*`과 `magistral-*`는 모두 `x-ratelimit-limit-req-minute: 0` — 재시도로 통과할 수 있는 스로틀링이 아니라 할당량 자체가 0입니다. 설정하지 않으면 Mistral은 아무것도 기여하지 못하고, 실행 로그에 `Provider Mistral failed`만 남긴 채 다른 제공자로 조용히 축소됩니다. `MISTRAL_MODEL=ministral-14b-latest`(30 req/분, 256k 컨텍스트, 무료 플랜에서 가장 큰 모델)를 설정하세요. 여유가 더 필요하면 `ministral-8b-latest`(188/분), `ministral-3b-latest`(750/분)로 품질과 교환할 수 있습니다. 특정 키가 실제로 무엇을 허용하는지는 `curl -s -H "Authorization: Bearer $MISTRAL_API_KEY" https://api.mistral.ai/v1/models`로 확인하되, 목록에 있어도 할당량이 0/분일 수 있으므로 반드시 limit 헤더를 보세요.
 
 Mistral이 두 번째 제공사로 적합한 이유는 Gemini와 계보가 다른 독립적인 모델이기 때문입니다. 두 번째 모델은 그 불일치가 모델의 약함이 아니라 데이터를 반영할 때에만 정보를 더합니다.
 
@@ -153,7 +153,7 @@ Mistral이 두 번째 제공사로 적합한 이유는 Gemini와 계보가 다�
 | `AI_DETAILED_PROVIDER` | `gemini` | 상세 분석에 Gemini 강제 사용 (GEMINI_API_KEY 설정 필요) |
 | `AI_DETAILED_PROVIDER` | `claude` | 상세 분석에 Claude 강제 사용 (`CLAUDE_CODE_OAUTH_TOKEN` 또는 `ANTHROPIC_API_KEY` 설정 필요) |
 | `AI_DETAILED_PROVIDER` | `mistral` | 상세 분석에 Mistral 강제 사용 (MISTRAL_API_KEY 설정 필요) |
-| `MISTRAL_MODEL` | `mistral-medium-latest` | 더 저렴하고 빠른 Mistral 모델 (기본값: `mistral-large-latest`) |
+| `MISTRAL_MODEL` | `ministral-14b-latest` | **무료 플랜에서는 필수** — 기본값 `mistral-large-latest`는 유료 플랜 전용 |
 | `CLAUDE_MODEL` | 예: `claude-haiku-4-5-20251001` | Claude 모델 재정의 (기본값: `claude-sonnet-4-6`) |
 
 키가 설정되지 않은 제공사 (또는 알 수 없는 이름)를 `AI_DETAILED_PROVIDER`로 지정하면 로그에 남긴 뒤 무시되고 레지스트리 순서로 폴백합니다. API 키 없는 제공사를 고정하면 모든 종목에서 실패하기 때문입니다.
@@ -222,5 +222,5 @@ Richfolio는 X, Facebook, Threads, LinkedIn의 공개 계정에 일반적인 매
 | `LINKEDIN_ACCESS_TOKEN` / `LINKEDIN_ORG_URN` | 아니오 | LinkedIn 페이지 게시 |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET` | 아니오 | X/Twitter 게시 |
 | `CLAUDE_MODEL` | 아니오 | Claude 모델 재정의 (기본값: `claude-sonnet-4-6`) |
-| `MISTRAL_MODEL` | 아니오 | Mistral 모델 재정의 (기본값: `mistral-large-latest`) |
+| `MISTRAL_MODEL` | 아니오 | Mistral 모델 재정의 (기본값: `mistral-large-latest`, **무료 플랜은 `ministral-14b-latest` 필수**) |
 | `AI_DETAILED_PROVIDER` | 아니오 | STRONG BUY 분석 페이지에 `gemini`, `claude`, `mistral` 중 하나 강제 사용 |
