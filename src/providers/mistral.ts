@@ -19,8 +19,8 @@ import { observationSchema, decisionSchema, strictify } from "./schemas.js";
 
 const API_URL = "https://api.mistral.ai/v1/chat/completions";
 
-// Large is the strongest model on the free Experiment tier. Override with
-// MISTRAL_MODEL (e.g. mistral-medium-latest) to trade quality for headroom.
+// Kept for paid tiers. The free tier grants only the ministral family — every
+// mistral-*/magistral-* model returns 403 or a 0/min limit — so set MISTRAL_MODEL.
 const DEFAULT_MODEL = "mistral-large-latest";
 
 // Matches Claude's ceiling and for the same reason: Stage 1 emits one verbose

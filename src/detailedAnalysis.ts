@@ -10,6 +10,7 @@ import { formatMoney } from "./util.js";
 import { crossPairSemantics } from "./providers/prompts.js";
 import { buildActiveProviders } from "./providers/index.js";
 import { mistralCall, mistralModel } from "./providers/mistral.js";
+import { GEMINI_MODEL } from "./providers/gemini.js";
 import { detailedSchema, strictify } from "./providers/schemas.js";
 import {
   resolveDetailedProvider,
@@ -197,8 +198,10 @@ function buildDetailedPrompt(
 // ── SDK calls (one per provider) ───────────────────────────────────
 async function callGemini(prompt: string): Promise<{ buyThesis?: string; risks?: string[] }> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  // Not pinned like callClaude below (which guards the Pro allocation): a key
+  // that needed GEMINI_MODEL to work at all would otherwise still 404 here.
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: GEMINI_MODEL,
     contents: prompt,
     config: { responseMimeType: "application/json", responseSchema: geminiDetailedSchema },
   });
