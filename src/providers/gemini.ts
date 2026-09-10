@@ -2,6 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { formatReasoningContext } from "../state.js";
 import type { AIBuyRecommendation, AIProvider, AIProviderInput } from "./types.js";
 import { buildObservationPrompt, buildDecisionPrompt, type TickerObservation } from "./prompts.js";
+import { GEMINI_MAX_RETRIES, isRetryableGeminiError, retryDelayMs } from "./geminiRetry.js";
 
 // ── Gemini-specific JSON schemas ───────────────────────────────────
 // These use `@google/genai`'s `Type` enum and are not portable to other SDKs.
@@ -145,7 +146,7 @@ async function geminiWithRetry(
   ai: InstanceType<typeof GoogleGenAI>,
   prompt: string,
   schema: Record<string, unknown>,
-  maxRetries: number = 2,
+  maxRetries: number = GEMINI_MAX_RETRIES,
 ): Promise<string> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -160,15 +161,10 @@ async function geminiWithRetry(
       return response.text ?? "[]";
     } catch (err) {
       const msg = (err as Error).message ?? "";
-      const isRetryable =
-        msg.includes("503") ||
-        msg.includes("429") ||
-        msg.includes("UNAVAILABLE") ||
-        msg.includes("RESOURCE_EXHAUSTED");
-      if (isRetryable && attempt < maxRetries) {
-        const delay = (attempt + 1) * 5000;
+      if (isRetryableGeminiError(msg) && attempt < maxRetries) {
+        const delay = retryDelayMs(attempt);
         console.log(
-          `  ⚠ Gemini ${msg.includes("503") ? "503" : "429"} — retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})`,
+          `  ⚠ Gemini ${msg.includes("503") ? "503" : "429"} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxRetries})`,
         );
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
