@@ -148,7 +148,7 @@ npx tsx smoke/smoke-threads.ts --post --cleanup   # posts a test (delete may be 
 
 **5. Agrega `THREADS_USER_ID` y `THREADS_ACCESS_TOKEN` a los Secrets de GitHub.**
 
-> **Expiración del token y auto-refresco:** los tokens de larga duración de Threads expiran en **~60 días**. El workflow `.github/workflows/refresh-threads-token.yml` refresca el token mensualmente y lo escribe de vuelta en el secret — *si* además agregas un secret `THREADS_TOKEN_PAT` (un PAT de grano fino con permiso de repositorio **Secrets: Read and write**). Sin ese PAT, refresca el token manualmente antes de que expire.
+> **Expiración del token y auto-refresco:** los tokens de larga duración de Threads expiran en **~60 días**. El workflow `.github/workflows/refresh-threads-token.yml` refresca el token mensualmente y lo escribe de vuelta en el secret — *si* además agregas un secret `THREADS_TOKEN_PAT` (un PAT de grano fino con permiso de repositorio **Secrets: Read and write**). Sin ese PAT, refresca el token manualmente antes de que expire. Cuando el token está configurado pero falta ese PAT, el workflow ahora **falla de forma explícita** en lugar de pasar en silencio: fue precisamente ese silencio lo que permitió que tres ejecuciones mensuales en verde ocultaran un token caducado.
 
 ---
 

@@ -148,7 +148,7 @@ npx tsx smoke/smoke-threads.ts --post --cleanup   # posts a test (delete may be 
 
 **5. 將 `THREADS_USER_ID` 與 `THREADS_ACCESS_TOKEN` 加入 GitHub Secret。**
 
-> **Token 過期與自動更新:** Threads 長效 token 約在 **60 天**後過期。工作流程 `.github/workflows/refresh-threads-token.yml` 會每月更新 token 並寫回 secret — *前提是*你也加入了 `THREADS_TOKEN_PAT` secret(一個具備儲存庫 **Secrets: Read and write** 的細粒度 PAT)。若沒有該 PAT,請在 token 過期前手動更新。
+> **Token 過期與自動更新:** Threads 長效 token 約在 **60 天**後過期。工作流程 `.github/workflows/refresh-threads-token.yml` 會每月更新 token 並寫回 secret — *前提是*你也加入了 `THREADS_TOKEN_PAT` secret(一個具備儲存庫 **Secrets: Read and write** 的細粒度 PAT)。若沒有該 PAT,請在 token 過期前手動更新。 當 token 已設定但缺少該 PAT 時,工作流程現在會**明確失敗**,而不是靜默通過 — 先前正是這種靜默通過,讓三次綠色的每月執行掩蓋了 token 過期。
 
 ---
 

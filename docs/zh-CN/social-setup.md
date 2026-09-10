@@ -148,7 +148,7 @@ npx tsx smoke/smoke-threads.ts --post --cleanup   # posts a test (delete may be 
 
 **5. 将 `THREADS_USER_ID` 和 `THREADS_ACCESS_TOKEN` 添加到 GitHub Secret。**
 
-> **令牌过期与自动刷新:** Threads 长效令牌约 **60 天**过期。工作流 `.github/workflows/refresh-threads-token.yml` 会每月刷新令牌并写回 secret — *前提是*你还添加了一个 `THREADS_TOKEN_PAT` secret(一个具有仓库 **Secrets: Read and write** 的 fine-grained PAT)。没有该 PAT 的话,请在令牌过期前手动刷新。
+> **令牌过期与自动刷新:** Threads 长效令牌约 **60 天**过期。工作流 `.github/workflows/refresh-threads-token.yml` 会每月刷新令牌并写回 secret — *前提是*你还添加了一个 `THREADS_TOKEN_PAT` secret(一个具有仓库 **Secrets: Read and write** 的 fine-grained PAT)。没有该 PAT 的话,请在令牌过期前手动刷新。 当令牌已设置但缺少该 PAT 时,工作流现在会**明确失败**,而不是静默通过 — 此前正是这种静默通过让三次绿色的月度运行掩盖了令牌过期。
 
 ---
 

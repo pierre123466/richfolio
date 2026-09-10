@@ -148,7 +148,7 @@ npx tsx smoke/smoke-threads.ts --post --cleanup   # posts a test (delete may be 
 
 **5. `THREADS_USER_ID` と `THREADS_ACCESS_TOKEN` を GitHub Secret に追加します。**
 
-> **トークンの失効と自動リフレッシュ：** Threads の長期有効トークンは**約 60 日**で失効します。ワークフロー `.github/workflows/refresh-threads-token.yml` が毎月トークンをリフレッシュし、Secret に書き戻します — *ただし* `THREADS_TOKEN_PAT` Secret（リポジトリの **Secrets: Read and write** 権限を持つ fine-grained PAT）も追加した場合に限ります。その PAT がなければ、失効前に手動でトークンをリフレッシュしてください。
+> **トークンの失効と自動リフレッシュ：** Threads の長期有効トークンは**約 60 日**で失効します。ワークフロー `.github/workflows/refresh-threads-token.yml` が毎月トークンをリフレッシュし、Secret に書き戻します — *ただし* `THREADS_TOKEN_PAT` Secret（リポジトリの **Secrets: Read and write** 権限を持つ fine-grained PAT）も追加した場合に限ります。その PAT がなければ、失効前に手動でトークンをリフレッシュしてください。 トークンが設定されているのに PAT がない状態では、ワークフローは静かに成功するのではなく**明示的に失敗**するようになりました。以前はこの状態で 3 回続けて緑のまま、トークンの失効が見過ごされました。
 
 ---
 

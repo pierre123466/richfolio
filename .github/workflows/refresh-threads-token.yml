@@ -4,11 +4,8 @@ name: Refresh Threads Token
 # (well within the window) and writes the new value back to the THREADS_ACCESS_TOKEN
 # secret, so social posting to Threads never silently breaks.
 #
-# Gated: no-ops gracefully unless BOTH are configured —
-#   - secrets.THREADS_ACCESS_TOKEN  (the current long-lived token)
-#   - secrets.THREADS_TOKEN_PAT     (a PAT that can write Actions secrets:
-#                                    fine-grained token with repository
-#                                    "Secrets: Read and write" permission)
+# No-ops only when Threads is unconfigured. A token WITHOUT THREADS_TOKEN_PAT
+# (fine-grained, repo "Secrets: Read and write") now FAILS — see the guard below.
 
 on:
   schedule:
@@ -37,9 +34,15 @@ jobs:
             echo "THREADS_ACCESS_TOKEN not set — Threads not configured; skipping."
             exit 0
           fi
+          # Reaching here means Threads IS configured but cannot self-refresh.
+          # Exiting 0 hid exactly that for three green monthly runs while the token died.
           if [ -z "$GH_TOKEN" ]; then
-            echo "THREADS_TOKEN_PAT not set — cannot write the refreshed secret; skipping."
-            exit 0
+            echo "::error::THREADS_TOKEN_PAT is not set, so the refreshed token cannot be"
+            echo "::error::written back. THREADS_ACCESS_TOKEN will expire ~60 days after it"
+            echo "::error::was issued. Add a fine-grained PAT with repo 'Secrets: Read and"
+            echo "::error::write' as THREADS_TOKEN_PAT, or unset THREADS_ACCESS_TOKEN to"
+            echo "::error::disable Threads posting entirely."
+            exit 1
           fi
           NEW=$(npx tsx scripts/refresh-threads-token.ts)
           if [ -z "$NEW" ]; then

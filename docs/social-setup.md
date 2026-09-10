@@ -146,7 +146,7 @@ npx tsx smoke/smoke-threads.ts --post --cleanup   # posts a test (delete may be 
 
 **5. Add `THREADS_USER_ID` and `THREADS_ACCESS_TOKEN` to GitHub Secrets.**
 
-> **Token expiry & auto-refresh:** Threads long-lived tokens expire in **~60 days**. The workflow `.github/workflows/refresh-threads-token.yml` refreshes the token monthly and writes it back to the secret — *if* you also add a `THREADS_TOKEN_PAT` secret (a fine-grained PAT with repository **Secrets: Read and write**). Without that PAT, refresh the token manually before it expires.
+> **Token expiry & auto-refresh:** Threads long-lived tokens expire in **~60 days**. The workflow `.github/workflows/refresh-threads-token.yml` refreshes the token monthly and writes it back to the secret — *if* you also add a `THREADS_TOKEN_PAT` secret (a fine-grained PAT with repository **Secrets: Read and write**). Without that PAT, refresh the token manually before it expires. Since it is set but unrefreshable, the workflow now **fails loudly** in that state rather than passing silently — which is how three green monthly runs once hid an expired token.
 
 ---
 

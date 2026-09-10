@@ -148,7 +148,7 @@ npx tsx smoke/smoke-threads.ts --post --cleanup   # posts a test (delete may be 
 
 **5. `THREADS_USER_ID`와 `THREADS_ACCESS_TOKEN`을 GitHub Secret에 추가하세요.**
 
-> **토큰 만료 및 자동 갱신:** Threads 장기 유효 토큰은 **약 60일** 후 만료됩니다. 워크플로우 `.github/workflows/refresh-threads-token.yml`이 매달 토큰을 갱신하고 secret에 다시 기록합니다 — *단,* `THREADS_TOKEN_PAT` secret(저장소 **Secrets: Read and write** 권한을 가진 세분화된 PAT)을 함께 추가한 경우에 한합니다. 이 PAT가 없으면 만료 전에 토큰을 수동으로 갱신하세요.
+> **토큰 만료 및 자동 갱신:** Threads 장기 유효 토큰은 **약 60일** 후 만료됩니다. 워크플로우 `.github/workflows/refresh-threads-token.yml`이 매달 토큰을 갱신하고 secret에 다시 기록합니다 — *단,* `THREADS_TOKEN_PAT` secret(저장소 **Secrets: Read and write** 권한을 가진 세분화된 PAT)을 함께 추가한 경우에 한합니다. 이 PAT가 없으면 만료 전에 토큰을 수동으로 갱신하세요. 토큰은 설정되어 있는데 PAT가 없는 상태에서는 이제 워크플로우가 조용히 통과하지 않고 **명시적으로 실패**합니다 — 과거 이 상태로 세 번의 월간 실행이 초록불인 채 토큰 만료를 가렸습니다.
 
 ---
 
