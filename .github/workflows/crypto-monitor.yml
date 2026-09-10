@@ -115,8 +115,11 @@ jobs:
           # Required, not cosmetic: Google retires models for NEW keys first, and
           # a freshly created key gets `404 gemini-2.5-flash is no longer
           # available to new users` while older keys on the same model keep
-          # working. `gemini-flash-latest` is an alias tracking the current Flash.
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL_CRYPTO || 'gemini-flash-latest' }}
+          # working. Pinned, NOT `gemini-flash-latest`: that alias tracks the
+          # newest Flash, which carries both the tightest free quota (20 req/day)
+          # and the worst contention, so it 503'd every crypto run from
+          # 2026-09-05 to 09-10. Google's own 404 names 3.6-flash for this key.
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL_CRYPTO || 'gemini-3.6-flash' }}
           # Same subscription identity as the equity runs — one token, no
           # per-token cost. ANTHROPIC_API_KEY is deliberately NOT passed: it
           # outranks OAuth inside Claude Code and would silently bill credits.
