@@ -48,6 +48,7 @@ function getSearchNames(ticker: string, priceData: Record<string, QuoteData>): s
 // ── Types ───────────────────────────────────────────────────────────
 export interface NewsItem {
   title: string;
+  description?: string;
   url: string;
   source: string;
   publishedAt: string;
@@ -60,11 +61,11 @@ export type TickerSentiment = "bullish" | "bearish" | "neutral" | "mixed" | "non
 
 interface NewsApiArticle {
   title: string;
+  description?: string | null;
   url: string;
   source: { name: string };
   publishedAt: string;
 }
-
 interface NewsApiResponse {
   status: string;
   totalResults: number;
@@ -85,15 +86,16 @@ async function fetchBatch(
   }
   const query = queryTerms.join(" OR ");
 
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+ const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const params = new URLSearchParams({
-    q: query,
-    from: since,
-    sortBy: "relevancy",
-    language: "en",
-    pageSize: "50",
-    apiKey: NEWS_API_KEY!,
+const params = new URLSearchParams({
+  q: query,
+  from: since,
+  sortBy: "relevancy",
+  pageSize: "50",
+  apiKey: NEWS_API_KEY!,
+});
+
   });
 
   const res = await fetch(`${NEWS_API_BASE}?${params}`);
@@ -111,30 +113,39 @@ async function fetchBatch(
   }
 
   for (const article of data.articles) {
-    // Skip non-English articles (NewsAPI language filter isn't perfect)
-    if (/[\u3000-\u9FFF\uAC00-\uD7AF\u0600-\u06FF]/.test(article.title)) continue;
+  const titleUpper = article.title.toUpperCase();
+  const descriptionUpper = (article.description ?? "").toUpperCase();
 
-    const titleUpper = article.title.toUpperCase();
-    for (const ticker of tickers) {
-      if (result[ticker].length >= MAX_ARTICLES_PER_TICKER) continue;
+  for (const ticker of tickers) {
+    if (result[ticker].length >= MAX_ARTICLES_PER_TICKER) continue;
 
-      const yahooTicker = toYahooTicker(ticker);
-      const names = getSearchNames(ticker, priceData);
-      const matches =
-        titleUpper.includes(ticker.toUpperCase()) ||
-        titleUpper.includes(yahooTicker.toUpperCase()) ||
-        names.some((n) => titleUpper.includes(n.toUpperCase()));
+    const yahooTicker = toYahooTicker(ticker);
+    const names = getSearchNames(ticker, priceData);
 
-      if (matches) {
-        result[ticker].push({
-          title: article.title,
-          url: article.url,
-          source: article.source.name,
-          publishedAt: article.publishedAt,
-        });
-      }
+    // Combine title + description so we don't lose articles
+    // where the company is mentioned in the summary rather than the title.
+    const text = `${titleUpper} ${descriptionUpper}`;
+
+    const matches =
+      // Avoid relying heavily on very short/generic tickers such as V, MA, PG.
+      (ticker.length >= 4 && text.includes(ticker.toUpperCase())) ||
+      (yahooTicker.length >= 4 && text.includes(yahooTicker.toUpperCase())) ||
+      names.some((n) => {
+        const name = n.toUpperCase();
+        return name.length > 2 && text.includes(name);
+      });
+
+    if (matches) {
+      result[ticker].push({
+        title: article.title,
+        description: article.description ?? undefined,
+        url: article.url,
+        source: article.source.name,
+        publishedAt: article.publishedAt,
+      });
     }
   }
+}
 
   return result;
 }
@@ -179,7 +190,11 @@ async function filterNewsWithGemini(
     if (articles.length === 0) continue;
     entries.push({
       ticker,
-      headlines: articles.map((a) => `${a.title} — ${a.source}`),
+      headlines: articles.map(
+  (a) =>
+    `${a.title}${a.description ? ` — ${a.description}` : ""} — ${a.source}`,
+),
+
     });
   }
   if (entries.length === 0) return allNews;
@@ -187,13 +202,30 @@ async function filterNewsWithGemini(
   const prompt = `You are a financial news relevance filter for an investment portfolio tracker. For each ticker below, determine which headlines are actually about the company/fund's financial context: stock performance, earnings, market analysis, sector trends, company strategy, M&A, regulatory impact, or macroeconomic effects on the ticker.
 
 REMOVE headlines that are:
-- Shopping/product/deal articles (e.g. "best deals on Amazon", "Dutch ovens under $50 on Amazon" — these are about the marketplace, not the stock)
-- Lifestyle, food, fashion, or consumer product reviews that merely mention a brand/platform
-- Animal, science, sports, or entertainment articles where the keyword match is coincidental (e.g. "bond" matching animal bonding, not bond markets)
-- Ads, sponsored content, or affiliate/deal roundups
-- Non-English articles that slipped through filters
+- Shopping/product/deal articles that merely mention a company or brand
+- Lifestyle, food, fashion, travel, or consumer product reviews
+- Animal, science, sports, entertainment, or unrelated articles where the company name is incidental
+- Ads, sponsored content, affiliate/deal roundups, or promotional content
+- Articles where the company is only mentioned as a minor example and is not the subject
+- Duplicate or near-duplicate stories
+- Articles that are not actually relevant to the company's business, financial situation, stock, strategy, management, regulation, competitors, or material events
 
-KEEP only headlines about: stock price, earnings, revenue, analyst ratings, market trends, company leadership, regulatory news, sector performance, fund flows, or economic indicators relevant to the ticker.
+
+KEEP only headlines about:
+- stock price or market reaction
+- earnings and financial results
+- revenue, profit, margins, guidance
+- analyst ratings or price targets
+- company strategy
+- products or major product launches
+- major contracts or customers
+- M&A
+- leadership changes
+- regulatory or legal developments
+- major operational developments
+- important competitors or sector developments directly affecting the company
+- material macroeconomic developments directly affecting the company
+
 
 Tickers and their matched headlines:
 ${entries.map((e) => `${e.ticker}:\n${e.headlines.map((h, i) => `  [${i}] ${h}`).join("\n")}`).join("\n\n")}
