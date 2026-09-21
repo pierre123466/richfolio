@@ -115,6 +115,7 @@ jobs:
         if: steps.mode.outputs.mode == 'daily'
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
