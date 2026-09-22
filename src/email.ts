@@ -498,32 +498,60 @@ ${
   tickersWithNews.length > 0
     ? `
 <tr><td style="padding:20px 24px 8px;background:${S.cardBg};border-top:1px solid ${S.border};">
-  <h2 style="margin:0;font-size:16px;color:${S.blue};">News Digest</h2>
+  <h2 style="margin:0;font-size:16px;color:${S.blue};">📰 News Digest</h2>
+  <p style="margin:4px 0 0;font-size:11px;color:${S.muted};">Relevant news for your watchlist — filtered and classified by Gemini.</p>
 </td></tr>
 <tr><td style="padding:0 24px 16px;background:${S.cardBg};">
   ${tickersWithNews
-    .map(
-      ([ticker, articles]) => `
-  <div style="margin-bottom:12px;">
-    <div style="font-weight:bold;font-size:13px;color:#fff;margin-bottom:4px;">${ticker}</div>
-    ${articles
-      .map(
-        (a) => `
-    <div style="margin-left:12px;margin-bottom:4px;font-size:12px;">
-      <a href="${a.url}" style="color:${S.blue};text-decoration:none;">→ ${a.title}</a>
-      <span style="color:${S.muted};font-size:11px;"> — ${a.source}</span>
-    </div>`,
-      )
+    .map(([ticker, articles]) => {
+      // Sort by impact: high → medium → low, then by sentiment (bullish first)
+      const sorted = [...articles].sort((a, b) => {
+        const impactOrder = { high: 0, medium: 1, low: 2 };
+        const sentimentOrder = { bullish: 0, bearish: 1, neutral: 2 };
+        const impactDiff = (impactOrder[a.impact ?? "medium"] ?? 1) - (impactOrder[b.impact ?? "medium"] ?? 1);
+        if (impactDiff !== 0) return impactDiff;
+        return (sentimentOrder[a.sentiment ?? "neutral"] ?? 2) - (sentimentOrder[b.sentiment ?? "neutral"] ?? 2);
+      });
+
+      return `
+  <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid ${S.border};">
+    <div style="font-weight:bold;font-size:14px;color:#fff;margin-bottom:8px;">${ticker}</div>
+    ${sorted
+      .map((a) => {
+        const sentimentIcon = a.sentiment === "bullish" ? "🟢" : a.sentiment === "bearish" ? "🔴" : "🟡";
+        const sentimentColor = a.sentiment === "bullish" ? S.green : a.sentiment === "bearish" ? S.red : S.yellow;
+        const impactColor = a.impact === "high" ? S.red : a.impact === "medium" ? S.yellow : S.muted;
+        const impactLabel = a.impact ? a.impact.toUpperCase() : "—";
+
+        return `
+    <div style="margin-bottom:10px;padding-left:8px;border-left:3px solid ${sentimentColor}44;">
+      <div style="font-size:12px;margin-bottom:3px;">
+        <span style="font-size:13px;">${sentimentIcon}</span>
+        <a href="${a.url}" style="color:${S.blue};text-decoration:none;font-weight:600;">${a.title}</a>
+      </div>
+      ${a.description ? `<div style="font-size:11px;color:${S.text};margin:4px 0 4px 18px;line-height:1.4;">${a.description.length > 200 ? a.description.slice(0, 197) + "…" : a.description}</div>` : ""}
+      <div style="font-size:10px;color:${S.muted};margin-left:18px;">
+        <span style="color:${impactColor};font-weight:bold;">Impact: ${impactLabel}</span>
+        · <span style="color:${sentimentColor};">${a.sentiment ?? "neutral"}</span>
+        · ${a.source}
+      </div>
+    </div>`;
+      })
       .join("")}
-  </div>`,
-    )
+  </div>`;
+    })
     .join("")}
 </td></tr>
 `
-    : ""
+    : `
+<tr><td style="padding:20px 24px 8px;background:${S.cardBg};border-top:1px solid ${S.border};">
+  <h2 style="margin:0;font-size:16px;color:${S.blue};">📰 News Digest</h2>
+</td></tr>
+<tr><td style="padding:0 24px 16px;background:${S.cardBg};">
+  <p style="margin:0;font-size:12px;color:${S.muted};font-style:italic;">Nothing material in the last 24 hours for your watchlist.</p>
+</td></tr>
+`
 }
-
-${
   hasCrossCurrency
     ? `
 <!-- FX caveat -->
