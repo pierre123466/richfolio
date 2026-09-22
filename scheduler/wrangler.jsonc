@@ -37,7 +37,7 @@
 
   // Not a secret: it is in the git remote URL already.
   "vars": {
-    "GITHUB_REPO": "furic/richfolio"
+    "GITHUB_REPO": "pierre123466/richfolio"
   },
 
   // Secrets (set via `npx wrangler secret put <NAME>`, never in this file):
