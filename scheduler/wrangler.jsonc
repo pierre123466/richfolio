@@ -22,7 +22,7 @@
   // `1-5` here silently means Sun-Thu: it deploys without error, runs on
   // Sunday, and skips Friday. Only `0` is rejected outright. Cloudflare's own
   // docs recommend the abbreviations to avoid this.
-     "triggers": {
+  "triggers": {
     "crons": [
       // 12:00 UTC = 13:00 WEST (Portugal, verão) / 12:00 WET (inverno).
       // O daily escreve a baseline que os intraday comparam — tem de correr antes do primeiro intraday.
