@@ -263,7 +263,7 @@ function buildAISection(
             (rec) => `
   <div style="padding:10px 0;border-bottom:1px solid ${S.border};">
     <div style="margin-bottom:4px;">
-      <span style="font-weight:bold;font-size:14px;color:#fff;" title="${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)}">${rec.ticker}</span>
+      <span style="font-weight:bold;font-size:14px;color:#fff;">${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)} <span style="color:${S.muted};font-weight:normal;">(${rec.ticker})</span></span>
       &nbsp;${actionBadge(rec.action)}${valueRatingBadge(rec.valueRating)}${earningsBadge(priceData[rec.ticker]?.daysToEarnings ?? null)}${isMultiAI(rec) ? agreementBadge(rec.agreement) : ""}${degradedBadge(rec.degradation)}
       &nbsp;${confidenceBar(rec.confidence)}${isMultiAI(rec) ? `<span style="font-size:10px;color:${S.muted};margin-left:6px;">avg</span>` : ""}
       ${rec.suggestedBuyValue > 0 ? `<span style="float:right;font-weight:bold;color:#fff;">${fmt$(rec.suggestedBuyValue)}</span>` : ""}
@@ -293,7 +293,7 @@ function buildAISection(
       .map(
         (rec) => `
     <div style="padding:4px 0;font-size:12px;">
-      <span style="font-weight:bold;" title="${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)}">${rec.ticker}</span>
+      <span style="font-weight:bold;">${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)} <span style="color:${S.muted};font-weight:normal;">(${rec.ticker})</span></span>
       &nbsp;${actionBadge(rec.action)}${valueRatingBadge(rec.valueRating)}
       <span style="color:${S.muted};margin-left:8px;">${rec.reason}</span>
     </div>`,
@@ -313,7 +313,7 @@ function buildAISection(
         (rec) => `
     <div style="padding:10px 0;border-bottom:1px solid ${S.border};">
       <div style="margin-bottom:4px;">
-        <span style="font-weight:bold;font-size:14px;color:#fff;" title="${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)}">${rec.ticker}</span>
+        <span style="font-weight:bold;font-size:14px;color:#fff;">${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)} <span style="color:${S.muted};font-weight:normal;">(${rec.ticker})</span></span>
         &nbsp;${actionBadge(rec.action)}${valueRatingBadge(rec.valueRating)}${earningsBadge(priceData[rec.ticker]?.daysToEarnings ?? null)}${isMultiAI(rec) ? agreementBadge(rec.agreement) : ""}${degradedBadge(rec.degradation)}
         &nbsp;${confidenceBar(rec.confidence)}${isMultiAI(rec) ? `<span style="font-size:10px;color:${S.muted};margin-left:6px;">avg</span>` : ""}
       </div>
@@ -339,7 +339,7 @@ function buildAISection(
         .map(
           (rec) => `
       <div style="padding:4px 0;font-size:12px;">
-        <span style="font-weight:bold;" title="${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)}">${rec.ticker}</span>
+        <span style="font-weight:bold;">${escapeHtmlAttr(rec.tickerFullName ?? rec.ticker)} <span style="color:${S.muted};font-weight:normal;">(${rec.ticker})</span></span>
         &nbsp;${actionBadge(rec.action)}${valueRatingBadge(rec.valueRating)}
         <span style="color:${S.muted};margin-left:8px;">${rec.reason}</span>
       </div>`,
@@ -378,7 +378,7 @@ function buildFallbackBuysSection(report: AllocationReport): string {
       .map(
         (b) => `
     <tr>
-      <td style="padding:6px 4px;border-bottom:1px solid ${S.border};font-weight:bold;" title="${escapeHtmlAttr(b.tickerFullName ?? b.ticker)}">${b.ticker}</td>
+      <td style="padding:6px 4px;border-bottom:1px solid ${S.border};font-weight:bold;">${escapeHtmlAttr(b.tickerFullName ?? b.ticker)} <span style="color:${S.muted};font-weight:normal;">(${b.ticker})</span></td>
       <td style="padding:6px 4px;border-bottom:1px solid ${S.border};text-align:right;color:${S.red};">${fmtPct(b.gapPct)}</td>
       <td style="padding:6px 4px;border-bottom:1px solid ${S.border};text-align:right;">${b.suggestedBuyShares.toFixed(1)}</td>
       <td style="padding:6px 4px;border-bottom:1px solid ${S.border};text-align:right;">${fmt$(b.suggestedBuyValue)}${b.overlapDiscount > 0 ? `<div style="font-size:10px;color:${S.muted};">-${fmt$(b.overlapDiscount)} overlap</div>` : ""}</td>
@@ -478,7 +478,7 @@ ${buysSection}
       .map(
         (item) => `
     <tr>
-      <td style="padding:5px 3px;border-bottom:1px solid ${S.border};font-weight:bold;" title="${escapeHtmlAttr(item.tickerFullName ?? item.ticker)}">${item.ticker}</td>
+      <td style="padding:5px 3px;border-bottom:1px solid ${S.border};font-weight:bold;">${escapeHtmlAttr(item.tickerFullName ?? item.ticker)} <span style="color:${S.muted};font-weight:normal;">(${item.ticker})</span></td>
       <td style="padding:5px 3px;border-bottom:1px solid ${S.border};text-align:right;">${fmt$(item.price)}</td>
       <td style="padding:5px 3px;border-bottom:1px solid ${S.border};text-align:right;">${item.currentPct.toFixed(1)}%</td>
       <td style="padding:5px 3px;border-bottom:1px solid ${S.border};text-align:right;">${item.targetPct.toFixed(1)}%</td>
@@ -513,9 +513,11 @@ ${
         return (sentimentOrder[a.sentiment ?? "neutral"] ?? 2) - (sentimentOrder[b.sentiment ?? "neutral"] ?? 2);
       });
 
+      const tickerLabel = `${escapeHtmlAttr(priceData[ticker]?.longName ?? priceData[ticker]?.name ?? ticker)} <span style="color:${S.muted};font-weight:normal;">(${ticker})</span>`;
+
       return `
   <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid ${S.border};">
-    <div style="font-weight:bold;font-size:14px;color:#fff;margin-bottom:8px;">${ticker}</div>
+    <div style="font-weight:bold;font-size:14px;color:#fff;margin-bottom:8px;">${tickerLabel}</div>
     ${sorted
       .map((a) => {
         const sentimentIcon = a.sentiment === "bullish" ? "🟢" : a.sentiment === "bearish" ? "🔴" : "🟡";
