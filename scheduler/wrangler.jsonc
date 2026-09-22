@@ -22,11 +22,15 @@
   // `1-5` here silently means Sun-Thu: it deploys without error, runs on
   // Sunday, and skips Friday. Only `0` is rejected outright. Cloudflare's own
   // docs recommend the abbreviations to avoid this.
-  "triggers": {
+   "triggers": {
     "crons": [
-      "0 22 * * *", // daily brief      — 8:00am AEST
-      "30 22 * * SUN", // weekly report    — Monday 8:30am AEST
-      "15 3,7,11,14 * * MON-FRI", // intraday checks  — 1:15pm/5:15pm/9:15pm/12:15am AEST
+      // 12:00 UTC = 13:00 WEST (Portugal, verão) / 12:00 WET (inverno).
+      // O daily escreve a baseline que os intraday comparam — tem de correr antes do primeiro intraday.
+      "0 12 * * *", // daily brief      — 13:00 Lisboa (verão)
+      "30 22 * * SUN", // weekly report    — 23:30 Lisboa (domingo)
+      // 13:15/15:15/18:15/20:15 UTC = 14:15/16:15/19:15/21:15 WEST (verão).
+      // O último slot cai 15min após o fecho US (21:00 UTC), para captar rescaldo pós-mercado.
+      "15 13,15,18,20 * * MON-FRI", // intraday checks  — 14:15/16:15/19:15/21:15 Lisboa
       "0 */3 * * *" // crypto pairs     — every 3 hours
     ]
   },
