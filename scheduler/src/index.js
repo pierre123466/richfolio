@@ -53,9 +53,11 @@
  * reaches crypto-monitor.yml with no routing logic here.
  */
 export const TRIGGERS = {
-  // 8:00am AEST. The one genuinely time-anchored run: it writes the morning
-  // baseline that every intraday comparison is measured against.
-  "0 22 * * *": "daily",
+  // 12:00 UTC = 13:00 WEST (Portugal, verão) / 12:00 WET (inverno).
+  // The one genuinely time-anchored run: it writes the morning baseline that
+  // every intraday comparison is measured against. Must fire before the first
+  // intraday slot.
+  "0 12 * * *": "daily",
 
   // Sunday 22:30 UTC = Monday 8:30am AEST. Deliberately 30min after the daily
   // rather than sharing its slot, so the two never run concurrently against the
@@ -68,11 +70,12 @@ export const TRIGGERS = {
   // the mode in the dispatch removes the guesswork.
   "30 22 * * SUN": "weekly",
 
-  // 1:15pm / 5:15pm / 9:15pm AEST, and 12:15am AEST next day. Weekdays only.
-  // Collapsed from four separate GitHub crons (3:15/7:00/10:45/14:30) into one
-  // expression to stay inside the 5-trigger free-plan budget. Minute :15 keeps
-  // them off the crypto schedule's :00 slots, as the original spacing did.
-  "15 3,7,11,14 * * MON-FRI": "intraday",
+  // 14:15 / 16:15 / 19:15 / 21:15 WEST (Portugal, verão). Weekdays only.
+  // Four checks spaced across the European trading day and the US session.
+  // The last slot fires 15min after the US close (21:00 UTC) to capture
+  // after-hours reaction. Minute :15 keeps them off the crypto schedule's :00
+  // slots, as the original spacing did.
+  "15 13,15,18,20 * * MON-FRI": "intraday",
 
   // Every 3 hours. Crypto trades 24/7, so unlike the equity intraday runs these
   // always have real price movement to compare against.
