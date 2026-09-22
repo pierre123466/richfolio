@@ -552,6 +552,7 @@ ${
 </td></tr>
 `
 }
+${
   hasCrossCurrency
     ? `
 <!-- FX caveat -->
