@@ -198,7 +198,7 @@ async function fetchForTicker(
     return [];
   }
 
-    // NewsAPI free rejeita timestamps com hora (devolve 0 artigos silenciosamente).
+  // NewsAPI free rejeita timestamps com hora (devolve 0 artigos silenciosamente).
   // Apenas datas puras no formato YYYY-MM-DD são aceites no plano free.
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
     .toISOString()
