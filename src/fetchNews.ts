@@ -290,6 +290,7 @@ async function filterNewsWithGemini(
 ): Promise<Record<string, NewsItem[]>> {
   if (!GEMINI_API_KEY) return allNews;
 
+  // Collect entries (only tickers with articles)
   const entries: { ticker: string; headlines: string[] }[] = [];
   for (const [ticker, articles] of Object.entries(allNews)) {
     if (articles.length === 0) continue;
@@ -309,10 +310,30 @@ async function filterNewsWithGemini(
 
   const total = entries.reduce((s, e) => s + e.headlines.length, 0);
   console.log(
-    `  Sending ${total} articles across ${entries.length} tickers to Gemini...`,
+    `  Sending ${total} articles across ${entries.length} tickers to Gemini (in batches)...`,
   );
 
-  const prompt = `You are a financial news relevance filter for an investment portfolio tracker.
+  // ── Batch processing to avoid Gemini 503 on large prompts ────────
+  // One massive prompt with 40+ tickers reliably triggers 503 UNAVAILABLE.
+  // Splitting into small batches keeps each prompt short and the model happy.
+  const BATCH_SIZE = 5;
+  const result: Record<string, NewsItem[]> = {};
+  const sentimentMap: Record<string, TickerSentiment> = {};
+
+  // Start with empty arrays for every ticker
+  for (const ticker of Object.keys(allNews)) result[ticker] = [];
+
+  for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+    const batch = entries.slice(i, i + BATCH_SIZE);
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(entries.length / BATCH_SIZE);
+    const batchArticles = batch.reduce((s, e) => s + e.headlines.length, 0);
+
+    console.log(
+      `  Gemini batch ${batchNum}/${totalBatches}: ${batchArticles} articles, ${batch.length} tickers`,
+    );
+
+    const prompt = `You are a financial news relevance filter for an investment portfolio tracker.
 
 For each ticker below, determine which articles are actually about the company or stock.
 
@@ -348,7 +369,7 @@ Do not reject an article merely because it is not in English.
 
 Tickers and their matched articles:
 
-${entries
+${batch
   .map(
     (e) =>
       `${e.ticker}:\n${e.headlines
@@ -363,93 +384,100 @@ For each ticker return:
 
 If no articles are relevant for a ticker, return an empty articles array and "neutral" for overallSentiment.`;
 
-  try {
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    try {
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-    let responseText: string | undefined;
-    for (let attempt = 0; attempt <= 2; attempt++) {
-      try {
-        const response = await ai.models.generateContent({
-          model: GEMINI_MODEL,
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: relevanceSchema,
-          },
-        });
-        responseText = response.text ?? undefined;
-        break;
-      } catch (retryErr) {
-        const msg = (retryErr as Error).message ?? "";
-        const isRetryable =
-          msg.includes("503") || msg.includes("429") || msg.includes("UNAVAILABLE");
+      let responseText: string | undefined;
+      for (let attempt = 0; attempt <= 2; attempt++) {
+        try {
+          const response = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: relevanceSchema,
+            },
+          });
+          responseText = response.text ?? undefined;
+          break;
+        } catch (retryErr) {
+          const msg = (retryErr as Error).message ?? "";
+          const isRetryable =
+            msg.includes("503") || msg.includes("429") || msg.includes("UNAVAILABLE");
 
-        if (isRetryable && attempt < 2) {
-          const delay = (attempt + 1) * 5000;
-          console.log(
-            `  ⚠ Gemini news filter ${msg.includes("503") ? "503" : "429"} — retrying in ${delay / 1000}s`,
-          );
-          await new Promise((r) => setTimeout(r, delay));
-          continue;
+          if (isRetryable && attempt < 2) {
+            const delay = (attempt + 1) * 5000;
+            console.log(
+              `    ⚠ Gemini news batch ${batchNum} ${msg.includes("503") ? "503" : "429"} — retrying in ${delay / 1000}s`,
+            );
+            await new Promise((r) => setTimeout(r, delay));
+            continue;
+          }
+          throw retryErr;
         }
-        throw retryErr;
+      }
+
+      if (!responseText) {
+        console.log(`    ✗ Gemini batch ${batchNum}: empty response, keeping unfiltered`);
+        // Keep articles unfiltered for this batch
+        for (const e of batch) {
+          const original = allNews[e.ticker];
+          if (original) result[e.ticker] = original;
+        }
+        continue;
+      }
+
+      const filtered = JSON.parse(responseText) as Array<{
+        ticker: string;
+        articles: Array<{ index: number; sentiment: string; impact: string }>;
+        overallSentiment: string;
+      }>;
+
+      for (const entry of filtered) {
+        const original = allNews[entry.ticker];
+        if (!original) continue;
+
+        result[entry.ticker] = entry.articles
+          .filter((a) => a.index >= 0 && a.index < original.length)
+          .map((a) => ({
+            ...original[a.index],
+            sentiment: (["bullish", "bearish", "neutral"].includes(a.sentiment)
+              ? a.sentiment
+              : "neutral") as NewsItem["sentiment"],
+            impact: (["high", "medium", "low"].includes(a.impact)
+              ? a.impact
+              : "medium") as NewsItem["impact"],
+          }));
+
+        sentimentMap[entry.ticker] = (
+          ["bullish", "bearish", "neutral", "mixed"].includes(entry.overallSentiment)
+            ? entry.overallSentiment
+            : "neutral"
+        ) as TickerSentiment;
+      }
+    } catch (err) {
+      console.log(
+        `    ✗ Gemini batch ${batchNum} failed, keeping unfiltered: ${(err as Error).message.slice(0, 100)}`,
+      );
+      // Fallback for this batch: keep original articles
+      for (const e of batch) {
+        const original = allNews[e.ticker];
+        if (original) result[e.ticker] = original;
       }
     }
-
-    if (!responseText) return allNews;
-
-    const filtered = JSON.parse(responseText) as Array<{
-      ticker: string;
-      articles: Array<{ index: number; sentiment: string; impact: string }>;
-      overallSentiment: string;
-    }>;
-
-    const result: Record<string, NewsItem[]> = {};
-    const sentimentMap: Record<string, TickerSentiment> = {};
-
-    for (const ticker of Object.keys(allNews)) result[ticker] = [];
-
-    for (const entry of filtered) {
-      const original = allNews[entry.ticker];
-      if (!original) continue;
-
-      result[entry.ticker] = entry.articles
-        .filter((a) => a.index >= 0 && a.index < original.length)
-        .map((a) => ({
-          ...original[a.index],
-          sentiment: (["bullish", "bearish", "neutral"].includes(a.sentiment)
-            ? a.sentiment
-            : "neutral") as NewsItem["sentiment"],
-          impact: (["high", "medium", "low"].includes(a.impact)
-            ? a.impact
-            : "medium") as NewsItem["impact"],
-        }));
-
-      sentimentMap[entry.ticker] = (
-        ["bullish", "bearish", "neutral", "mixed"].includes(entry.overallSentiment)
-          ? entry.overallSentiment
-          : "neutral"
-      ) as TickerSentiment;
-    }
-
-    _lastSentimentMap = sentimentMap;
-
-    const before = Object.values(allNews).reduce((s, a) => s + a.length, 0);
-    const after = Object.values(result).reduce((s, a) => s + a.length, 0);
-
-    console.log(
-      `  Gemini filter: ${before} → ${after} articles (removed ${before - after} irrelevant)`,
-    );
-
-    return result;
-  } catch (err) {
-    console.warn(
-      `  ⚠ Gemini news filter failed, using unfiltered results: ${(err as Error).message}`,
-    );
-    return allNews;
   }
-}
 
+  _lastSentimentMap = sentimentMap;
+
+  const before = Object.values(allNews).reduce((s, a) => s + a.length, 0);
+  const after = Object.values(result).reduce((s, a) => s + a.length, 0);
+
+  console.log(
+    `  Gemini filter: ${before} → ${after} articles (removed ${before - after} irrelevant)`,
+  );
+
+  return result;
+}
 // ── Sentiment map ───────────────────────────────────────────────────
 
 let _lastSentimentMap: Record<string, TickerSentiment> = {};
