@@ -316,7 +316,7 @@ async function filterNewsWithGemini(
   // ── Batch processing to avoid Gemini 503 on large prompts ────────
   // One massive prompt with 40+ tickers reliably triggers 503 UNAVAILABLE.
   // Splitting into small batches keeps each prompt short and the model happy.
-  const BATCH_SIZE = 5;
+  const BATCH_SIZE = 15;
   const result: Record<string, NewsItem[]> = {};
   const sentimentMap: Record<string, TickerSentiment> = {};
 
