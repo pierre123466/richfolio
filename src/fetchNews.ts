@@ -365,6 +365,8 @@ REMOVE articles that are:
 - duplicate or near-duplicate stories
 - articles where the company name appears coincidentally
 - articles that are not financially or strategically relevant to the company
+- articles classified as "neutral" sentiment (only bullish or bearish matter for decisions)
+- articles classified as "low" impact (only high or medium impact move markets)
 
 Important:
 Do not reject an article merely because it is not in English.
