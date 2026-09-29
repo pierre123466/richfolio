@@ -337,7 +337,9 @@ async function filterNewsWithGemini(
 
 For each ticker below, determine which articles are actually about the company or stock.
 
-The article may be written in English, Portuguese, Spanish, French, German, Dutch, Japanese, or another language.
+The article must be written in one of these languages: English, Portuguese, Spanish, French, German, or Italian.
+
+If the article is in any other language (Japanese, Chinese, Korean, Russian, Dutch, Nordic languages, Arabic, Hindi, etc.), classify it as IRRELEVANT and remove it — the reader cannot read those languages.
 
 KEEP articles about:
 - stock price or market reaction
