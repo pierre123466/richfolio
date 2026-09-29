@@ -443,6 +443,7 @@ If no articles are relevant for a ticker, return an empty articles array and "ne
 
         result[entry.ticker] = entry.articles
           .filter((a) => a.index >= 0 && a.index < original.length)
+          .filter((a) => a.sentiment !== "neutral" && a.impact !== "low")
           .map((a) => ({
             ...original[a.index],
             sentiment: (["bullish", "bearish", "neutral"].includes(a.sentiment)
