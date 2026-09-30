@@ -316,7 +316,7 @@ async function filterNewsWithGemini(
   // ── Batch processing to avoid Gemini 503 on large prompts ────────
   // One massive prompt with 40+ tickers reliably triggers 503 UNAVAILABLE.
   // Splitting into small batches keeps each prompt short and the model happy.
-  const BATCH_SIZE = 15;
+  const BATCH_SIZE = 5;
   const result: Record<string, NewsItem[]> = {};
   const sentimentMap: Record<string, TickerSentiment> = {};
 
@@ -392,7 +392,7 @@ If no articles are relevant for a ticker, return an empty articles array and "ne
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
       let responseText: string | undefined;
-      for (let attempt = 0; attempt <= 2; attempt++) {
+      for (let attempt = 0; attempt <= 4; attempt++) {
         try {
           const response = await ai.models.generateContent({
             model: GEMINI_MODEL,
@@ -409,10 +409,14 @@ If no articles are relevant for a ticker, return an empty articles array and "ne
           const isRetryable =
             msg.includes("503") || msg.includes("429") || msg.includes("UNAVAILABLE");
 
-          if (isRetryable && attempt < 2) {
-            const delay = (attempt + 1) * 5000;
+          if (isRetryable && attempt < 4) {
+            // Backoff agressivo: 5s, 15s, 30s, 45s — dá ao Gemini tempo para
+            // sair do estado de sobrecarga antes de desistir.
+            const delays = [5000, 15000, 30000, 45000];
+            const delay = delays[attempt];
+            const code = msg.includes("429") ? "429" : "503";
             console.log(
-              `    ⚠ Gemini news batch ${batchNum} ${msg.includes("503") ? "503" : "429"} — retrying in ${delay / 1000}s`,
+              `    ⚠ Gemini news batch ${batchNum} ${code} — retrying in ${delay / 1000}s (attempt ${attempt + 1}/4)`,
             );
             await new Promise((r) => setTimeout(r, delay));
             continue;
