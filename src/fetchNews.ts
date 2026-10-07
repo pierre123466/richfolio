@@ -49,7 +49,19 @@ const TICKER_NAME_OVERRIDES: Record<string, string[]> = {
   "PIRC.MI": ["Pirelli"],
   "ULVR.L": ["Unilever"],
   ASML: ["ASML"],
-
+  
+  // ── Global banks (NEW) ──
+  "BNP.PA": ["BNP Paribas"],
+  "SAN.MC": ["Banco Santander", "Santander"],
+  "BBVA.MC": ["BBVA"],
+  "CABK.MC": ["CaixaBank"],
+  HSBC: ["HSBC"],
+  "ABN.AS": ["ABN AMRO"],
+  "BIRG.IR": ["Bank of Ireland"],
+  "7182.T": ["Japan Post Bank"],
+  "0023.HK": ["Bank of East Asia"],
+  RY: ["Royal Bank of Canada"],
+  
   // ── Portuguese ──
   "BCP.LS": ["Banco Comercial Portugues", "BCP"],
   "EDPR.LS": ["EDP Renovaveis", "EDP Renewables"],
